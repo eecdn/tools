@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI图像生成器 - 垂直布局版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 新增容器间距 */
+        .main-container {
+            @apply flex flex-col min-h-screen;
+        }
+
+        /* 输入输出区域间距 */
+        .content-section {
+            @apply flex-1 space-y-8;
+        }
+
+        /* 图片容器增强 */
+        .image-container {
+            @apply bg-gray-50 rounded-xl shadow-xl transition-transform;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .image-container:hover {
+            @apply transform scale-105;
+        }
+
+        /* 加载状态动画 */
+        .loading-state {
+            @apply flex flex-col items-center justify-center space-y-4;
+        }
+
+        /* 响应式调整 */
+        @media (min-width: 768px) {
+            .main-container {
+                @apply flex-row;
+            }
+            
+            .sidebar {
+                @apply w-96 border-r border-gray-100;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="main-container">
+        <!-- 输入侧边栏 -->
+        <div class="sidebar p-8 space-y-6">
+            <h1 class="text-3xl font-bold text-gray-800">
+                AI 图像生成器
+            </h1>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="prompt" class="block text-sm font-medium text-gray-700">
+                        举牌内容
+                    </label>
+                    <div class="mt-1">
+                        <input 
+                            id="prompt" 
+                            type="text" 
+                            placeholder="输入文字（例如：我爱你）"
+                            class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                    </div>
+                </div>
+
+                <button 
+                    id="generateBtn"
+                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center"
+                >
+                    <span class="mr-2">生成图像</span>
+                    <div class="loader hidden"></div>
+                </button>
+            </div>
+
+            <div class="mt-8 text-center text-sm text-gray-600">
+                <p>支持的文字和标点符号：</p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <span class="px-3 py-1 bg-gray-100 rounded-full"></span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full"></span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输出主内容区 -->
+        <div class="content-section p-8">
+            <div class="loading-state" id="loadingState">
+                <div class="animate-pulse bg-gray-200 h-48 rounded-lg"></div>
+                <p class="text-gray-600">正在生成图像，请稍候...</p>
+            </div>
+
+            <div class="image-container hidden" id="resultContainer">
+                <img 
+                    id="resultImg" 
+                    src="" 
+                    alt="生成的图像"
+                    class="w-full h-96 object-contain rounded-t-xl"
+                >
+                <div class="absolute bottom-4 left-4 right-4">
+                    <a 
+                        id="downloadBtn"
+                        href="#" 
+                        download="generated-image.png"
+                        class="bg-white text-blue-600 px-6 py-3 rounded-full shadow-lg hover:bg-gray-100 flex items-center justify-center"
+                    >
+                        <svg class="mr-2 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L18 7m-1 0l-1 1m0 0l-1-1m1 0l1 1m-5-5l5 5"/>
+                        </svg>
+                        下载原图
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.528sq.cn/api/zt.php';
+        const generateBtn = document.getElementById('generateBtn');
+        const resultImg = document.getElementById('resultImg');
+        const resultContainer = document.getElementById('resultContainer');
+        const loadingState = document.getElementById('loadingState');
+
+        async function handleGenerate() {
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                alert('请输入文字');
+                return;
+            }
+
+            // 重置状态
+            generateBtn.disabled = true;
+            loadingState.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_URL}?msg=${encodeURIComponent(prompt)}`);
+                
+                if (!response.ok) throw new Error(`HTTP错误: ${response.status}`);
+                
+                const blob = await response.blob();
+                resultImg.src = URL.createObjectURL(blob);
+
+                // 图片加载完成后
+                await new Promise(resolve => {
+                    resultImg.onload = () => {
+                        loadingState.classList.add('hidden');
+                        resultContainer.classList.remove('hidden');
+                        generateBtn.disabled = false;
+                    };
+                });
+            } catch (error) {
+                console.error('生成失败:', error);
+                loadingState.innerHTML = `
+                    <div class="text-red-600 text-xl mb-4">❌ 生成失败</div>
+                    <p class="text-gray-600">${error.message}</p>
+                    <button 
+                        onclick="location.reload()" 
+                        class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors"
+                    >
+                        重试
+                    </button>
+                `;
+                generateBtn.disabled = false;
+            }
+        }
+
+        // 事件绑定
+        generateBtn.addEventListener('click', handleGenerate);
+        
+        // 下载功能增强
+        document.getElementById('downloadBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!resultImg.src) return;
+            
+            const link = document.createElement('a');
+            link.href = resultImg.src;
+            link.download = `generated-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // 视觉增强
+        resultImg.addEventListener('load', () => {
+            resultContainer.classList.add('animate-float');
+        });
+    </script>
+</body>
+</html>

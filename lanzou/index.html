@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>亿思博客蓝奏云解析</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+:root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --success: #27ae60;
+    --text: #34495e;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background: rgba(255,255,255,0.95);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+input[type="text"], 
+input[type="url"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #dfe6e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.output-box {
+    position: relative;
+    display: flex;
+    gap: 10px;
+}
+
+#api-output {
+    flex: 1;
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
+
+button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#generate-btn {
+    background: var(--secondary);
+    color: white;
+}
+
+#generate-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+#visit-btn {
+    background: var(--success);
+    color: white;
+    margin-left: 1rem;
+}
+
+#copy-btn {
+    background: none;
+    color: var(--text);
+    padding: 10px;
+    border: 2px solid #dfe6e9;
+}
+
+#copy-btn:hover {
+    background: #f8f9fa;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .action-btns {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    #visit-btn {
+        margin-left: 0;
+        margin-top: 1rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>蓝奏云解析链接生成器</h1>
+        
+        <div class="input-group">
+            <label for="url-input">文件地址（必填）:</label>
+            <input type="url" id="url-input" required 
+                   placeholder="填入蓝奏分享链接">
+        </div>
+
+        <div class="input-group">
+            <label for="pwd-input">提取密码（可选）:</label>
+            <input type="text" id="pwd-input" 
+                   placeholder="密码">
+        </div>
+
+        <div class="output-group">
+            <label>生成结果:</label>
+            <div class="output-box">
+                <input type="text" id="api-output" readonly>
+                <button id="copy-btn" title="复制链接">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="action-btns">
+            <button id="generate-btn">生成链接</button>
+            <button id="visit-btn" disabled>立即访问</button>
+        </div>
+    </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const urlInput = document.getElementById('url-input');
+    const pwdInput = document.getElementById('pwd-input');
+    const apiOutput = document.getElementById('api-output');
+    const generateBtn = document.getElementById('generate-btn');
+    const visitBtn = document.getElementById('visit-btn');
+    const copyBtn = document.getElementById('copy-btn');
+
+    // 生成API链接
+    function generateAPI() {
+        const baseURL = 'https://api.kxzjoker.cn/api/lanzou?url=';
+        const url = encodeURIComponent(urlInput.value.trim());
+        const pwd = pwdInput.value.trim();
+        
+        let apiLink = `${baseURL}${url}&type=down`;
+        if (pwd) apiLink += `&pwd=${pwd}`;
+        
+        apiOutput.value = apiLink;
+        visitBtn.disabled = false;
+    }
+
+    // 输入验证
+    urlInput.addEventListener('input', () => {
+        const isValid = urlInput.checkValidity();
+        generateBtn.disabled = !isValid;
+        visitBtn.disabled = true;
+    });
+
+    // 按钮交互
+    generateBtn.addEventListener('click', generateAPI);
+    
+    visitBtn.addEventListener('click', () => {
+        window.open(apiOutput.value, '_blank');
+    });
+
+    // 复制功能
+    copyBtn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(apiOutput.value);
+            alert('链接已复制到剪贴板！');
+        } catch (err) {
+            console.error('复制失败:', err);
+        }
+    });
+});
+</script>
+<script src="https://cdn.eees.cn/eees.cn.js"></script>
+<script src="https://cdn.eees.cn/js/wow.min.js"></script>
+<script src="https://cdn.eees.cn/js/time.js"></script>
+<script src="https://cdn.eees.cn/js/denglong.js"></script>
+</body>
+</html>
